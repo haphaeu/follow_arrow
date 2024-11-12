@@ -28,7 +28,7 @@ enum State {
 }
 use State::*;
 
-#[derive(PartialEq, Clone, Copy)]
+#[derive(PartialEq, Clone, Copy, Debug)]
 enum Arrow {
     Left,
     Right,
@@ -101,8 +101,9 @@ impl Model {
                 let empty = self.index_empty();
                 self.boards.push(self.boards.last().unwrap().clone());
                 self.boards.last_mut().unwrap().swap(index, empty);
+                println!("{:?}", self.boards.last().unwrap());
                 if *self.boards.last().unwrap()
-                    == vec![Right, Right, Right, Right, Empty, Left, Left, Left, Left]
+                    == vec![Left, Left, Left, Left, Empty, Right, Right, Right, Right]
                 {
                     println!("Solved!");
                     self.state = Solved;
@@ -120,7 +121,7 @@ impl Model {
 }
 
 fn main() {
-    nannou::app(model).update(update).run();
+    nannou::app(model).loop_mode(LoopMode::Wait).run();
 }
 
 fn model(app: &App) -> Model {
@@ -133,15 +134,6 @@ fn model(app: &App) -> Model {
         .build()
         .unwrap();
     Model::new()
-}
-
-fn update(_app: &App, model: &mut Model, _update: Update) {
-    match model.state {
-        Intro => {}
-        Playing => {}
-        Solved => {}
-        GameOver => {}
-    }
 }
 
 fn event(app: &App, model: &mut Model, event: WindowEvent) {
@@ -179,12 +171,13 @@ fn view(app: &App, model: &Model, frame: Frame) {
     match model.state {
         Playing | Solved | GameOver => {
             let win = app.window_rect();
-            let cell_width = win.w() / 9 as f32;
-            let cell_height = win.h();
+            let pad = win.h() / 5.0;
+            let cell_width = (win.w() - 2.0 * pad) / 9 as f32;
+            let cell_height = win.h() - pad;
             // draw all the cells
             for col in 0..9 {
-                let x = win.left() + col as f32 * cell_width + cell_width / 2.0;
-                let y = win.top() / 2.0;
+                let x = win.left() + pad + col as f32 * cell_width + cell_width / 2.0;
+                let y = 0.0;
                 // draw the cell
                 draw.rect()
                     .x_y(x, y)
