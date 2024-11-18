@@ -3,21 +3,19 @@ use nannou::prelude::*;
 static INTRO_TEXT: &str =
     "Click on an arrow to move it. Arrows only move in the direction they are pointing, if
 there is either an empty space next to it, or if it can jump over another arrow into
-an empty space.
-The goal is to move all left-pointing arrows to the left, and all right-pointing arrows
-to the right.
+an empty space. Goal: move all left arrows to the left, and all right arrows right.
 Click the mouse to start.
 ";
 
 static GAMEOVER_TEXT: &str = "No more valid moves. Game over.
-
 Click the mouse to try again.
 ";
 
 static SOLVED_TEXT: &str = "You did it! Congratulations!
-
 Click the mouse to re-start.
 ";
+
+static PAD_HEIGHT_FACTOR: f32 = 0.2;
 
 #[derive(PartialEq)]
 enum State {
@@ -147,7 +145,17 @@ fn event(app: &App, model: &mut Model, event: WindowEvent) {
                 // and move it if it can be moved.
                 println!("Playing mode");
                 println!("Clicked at {}, {}", app.mouse.x, app.mouse.y);
-                let w = app.window_rect().w();
+                let win = app.window_rect();
+                let pad = win.h() * PAD_HEIGHT_FACTOR;
+                let w = win.w();
+                if (win.top() - app.mouse.y)
+                   .min(app.mouse.y - win.bottom())
+                   .min(win.right() - app.mouse.x)
+                   .min(app.mouse.x - win.left()) < pad 
+                {
+                    println!("Clicked outside the board");
+                    return;
+                }
                 let index_clicked = (9.0 * (app.mouse.x + w / 2.0) / w) as usize;
                 println!("Index clicked: {}", index_clicked);
                 model.try_move(index_clicked);
@@ -171,7 +179,7 @@ fn view(app: &App, model: &Model, frame: Frame) {
     match model.state {
         Playing | Solved | GameOver => {
             let win = app.window_rect();
-            let pad = win.h() / 5.0;
+            let pad = win.h() * PAD_HEIGHT_FACTOR;
             let cell_width = (win.w() - 2.0 * pad) / 9 as f32;
             let cell_height = win.h() - pad;
             // draw all the cells
